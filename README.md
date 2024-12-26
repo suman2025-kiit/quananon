@@ -1,5 +1,8 @@
 # quananon
-Quantum_AnonCreds_Dew_Edge
+
+## Quantum_AnonCreds_Dew_Edge
+#### Initialsetup for dynamic identity generation, 160-bit address generation , 4-Qubits GHZ Bell states generation via smart contract and chaincode validation 
+
 We employed Bionic 18.04.4, Pandas, Python 3.6, Jupyter Notebook, and Hyperledger AnonCreds 1.0 to create and confirm Dynamic Identities (DID), Wallet addresses, and Verifiable Credentials (VC) for marketplace participants. AnonCreds 1.0 operates with the Hyperledger Indy platform to generate an Indy System Pool, assigning verifier roles like Trust Anchor (role '101') or Trustee (role '0') using Nym Transactions in our 'DID_WalletAddress_Generator.py' program.
 
 Start Docker with the following command docker-compose up-d
