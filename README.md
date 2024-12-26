@@ -3,13 +3,11 @@
 ## Quantum_AnonCreds_Dew_Edge
 #### Initialsetup for dynamic identity generation, 160-bit address generation , 4-Qubits GHZ Bell states generation via smart contract and chaincode validation 
 
-We employed Bionic 18.04.4, Pandas, Python 3.6, Jupyter Notebook, and Hyperledger AnonCreds 1.0 to create and confirm Dynamic Identities (DID), 160-bit dynamic addresses, and Verifiable Credentials (VC) for Healthcare CHoT participants in Quantum-Blockchain distributed network. AnonCreds 1.0 operates with the Hyperledger Indy platform to generate an Indy System Pool, assigning verifier roles like Trust Anchor (role '101') or Trustee (role '0') using Nym Transactions in our 'DID_WalletAddress_Generator.py' program.
+We utilized Ubuntu Bionic 18.04.4, Pandas, Python 3.6, Jupyter Notebook, and Hyperledger AnonCreds 1.0 to develop and validate Dynamic Identities (DID), 160-bit dynamic addresses, and Verifiable Credentials (VC) for participants in the Healthcare CHoT within a Quantum-Blockchain distributed network. AnonCreds 1.0, integrated with the Hyperledger Indy platform, facilitates the creation of an Indy System Pool. This setup assigns verifier roles such as Trust Anchor (role '101') and Trustee (role '0') using Nym Transactions in our 'DID_WalletAddress_Generator.py' script.
 
-Start Docker with the following command docker-compose up-d
-to stop the docker after experiment docker-compose down
+To start Docker, used the command: docker-compose up -d. To stop Docker after the experiment, use: docker-compose down.
 
-Installation AnonCreds 1.0 collaborates with the Hyperledger Indy platform, creating an Indy System Pool that assigns predefined verifiers, such as Trust Anchors (role '101') and Trustees (role '0'), through Nym Transactions in our 'DID_WalletAddress_Generator.py' program.
-Please go inside path # cd fabric
+For installation, AnonCreds 1.0 works alongside the Hyperledger Indy platform to generate an Indy System Pool. This pool assigns predefined verifiers like Trust Anchors (role '101') and Trustees (role '0'), through Nym Transactions managed by our 'DID_WalletAddress_Generator.py' script. Navigate to the directory with the command: cd fabric.
 
 ./ install.sh
 
