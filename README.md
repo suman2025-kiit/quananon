@@ -73,13 +73,13 @@ g. Now Import "Registrationcontract.sol" into the editor's folder containing 'Va
 
 All such coding related the aforesaid procedure is already mentioned in DID_WalletAddress_Generator.py file
 
-Installation of python 3.6, Jupiter Note book and Pandas for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore and trace the Frauds using Classical/Quantum Machine Learning Optimization Schemes like VQC Model for the probability of > 0.75 of Score Vectore for Frauds using the following steps.
+Installation of python 3.6, Jupiter Note book and Pandas for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore and trace the Frauds using our proposed Tiny Quantum Machine Learning Optimization Model - "tQTKSAM"  Model for the probability of > 0.75 of Score Vectore for Frauds using the following steps.
 a.The relevant information is uploaded in separate CSV files, linked to dynamically generated DID and Wallet Addresses, 'varifiable,' from 'Schema'information to facilitate efficient data exchange and validation (sample.csv).
 
-b. Initially, install Python 3.6, Jupyter Notebook, and Pandas to efficiently generate valid 4-qubit entangled GHZ states using 'GHZ_Theta-Copy.ipynb' file and θ-protocol based on Generated DID and wallet addresses.
+b. Initially, install Python 3.6, Jupyter Notebook, and Pandas to efficiently generate valid 4-qubit entangled GHZ states using 'GHZ_Theta-Copy.ipynb' file and θ-protocol based on Generated DID and dynamic 160-bit addresses.
 
 c. Afterwards, importing the file 'ghz_state_Fidelity_generation.py' Fidelity is generated for each 4-Qubit states from the .CSV files to check the Fidelity(F)>=0.50 or >= 50% and accondingly the valid 4-quibit engangled states are traced and fraud/invalid states are discarded.
 
-d. Normalized and diagonally reduced the feature space with valid information using PCA/Quantum PCA as implementated in 'PCA1.ipynb' file.
+d. Normalized and diagonally reduced the feature space with valid information using Quantum PCA (QPCA) as implementated in 'QPCA1.ipynb' file.
 
 e. Based on the valid 4-Qubit states for Fidelity(F)>=0.50, Feature related information is generated using ZZfeature Map for to generate Hilbert space for N-qubits of the valid GHZ states and encode the information
