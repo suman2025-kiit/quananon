@@ -3,25 +3,26 @@ package asset
 import (
 	"strconv"
 
-	"golang.org/x/crypto/sha3"
+	"golang.org/x/medical_asset/sha3"
 )
 
-type Asset struct {
-	ID               string
+type Medical_Asset struct {
+	Medical_Asset_type_ID   string
+	DID		string
 	Owner            string
 	PendingAuctionID int
 }
 
-type Auction struct {
-	ID         int
-	AssetID    string
+type Schema struct {
+	DID          string
+	Medical_Asset_type_ID    string
 	EthAddr    string
 	QuorumAddr string
 
 	Status string
 
-	HighestBid         int
-	HighestBidder      string
+	Bl_type         int
+	Bl_name      string
 	HighestBidPlatform string
 }
 
