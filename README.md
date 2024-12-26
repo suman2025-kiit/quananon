@@ -48,7 +48,8 @@ export CORE_PEER_ADDRESS=localhost:7051
 Installation of Ethereum platform cd ethereum
 sudo ./ install.sh
 
-Installation of Hyperledger Indy platform for starting the system pool for AnonCreds and run the AnonCreds funcionality under Hyperledger platform a.First clone Indy node repository for starting the repository using the commands-
+Installation of Hyperledger Indy platform for starting the system pool for AnonCreds and run the AnonCreds funcionality under Hyperledger platform 
+a.First clone Indy node repository for starting the repository using the commands-
 git clone https://github.com/hyperledger/indy-node.git
 
 Then go inside the directory using the command - cd indy-sdk
@@ -73,7 +74,7 @@ g. Now Import "Registrationcontract.sol" into the editor's folder containing 'Va
 
 All such coding related the aforesaid procedure is already mentioned in DID_WalletAddress_Generator.py file
 
-Installation of python 3.6, Jupiter Note book and Pandas for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore and trace the Frauds using our proposed Tiny Quantum Machine Learning Optimization Model - "tQTKSAM"  Model for the probability of > 0.75 of Score Vectore for Frauds using the following steps.
+Installation of python 3.6, Jupiter Note book and Pandas for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore and trace the Frauds using our proposed Tiny Quantum Machine Learning Optimization Model - "tQTKSAM"  Model for the probability > 0.75  for Frauds using the following steps.
 a.The relevant information is uploaded in separate CSV files, linked to dynamically generated DID and Wallet Addresses, 'varifiable,' from 'Schema'information to facilitate efficient data exchange and validation (sample.csv).
 
 b. Initially, install Python 3.6, Jupyter Notebook, and Pandas to efficiently generate valid 4-qubit entangled GHZ states using 'GHZ_Theta-Copy.ipynb' file and θ-protocol based on Generated DID and dynamic 160-bit addresses.
