@@ -93,7 +93,7 @@ func (cc *SmartContract) StartAuction(
 		return fmt.Errorf("error setting medical asset: %v", err)
 	}
 
-	// Emit an event when an auction is started
+	// Emit an event when an auction for the medical asset is started
 	eventPayload := fmt.Sprintf("Auction start for medical asset: %d", auction.data_hash)
 	err = ctx.GetStub().SetEvent("StartAuction", []byte(eventPayload))
 	if err != nil {
@@ -113,10 +113,10 @@ func (cc *SmartContract) CancelAuction(
 	if err != nil {
 		return err
 	}
-	auction.Status = "closed"
+	auction.Status = status.Rejected
 	err = cc.setAuction(ctx, auction)
 	if err != nil {
-		return fmt.Errorf("error setting auction: %v", err)
+		return fmt.Errorf("error setting auction for the medical asset: %v", err)
 	}
 
 	asset, err := cc.GetAsset(ctx, auction.Medical_Asset_type_ID)
@@ -151,7 +151,7 @@ func (cc *SmartContract) CloseAuction(
 		return err
 	}
 
-	auction.Status = "closing"
+	auction.Status = status.Validated
 	err = cc.setAuction(ctx, auction)
 	if err != nil {
 		return fmt.Errorf("error setting auction for medical asset: %v", err)
@@ -192,7 +192,7 @@ func (cc *SmartContract) FinAuction(
 		return fmt.Errorf("invalid medical asset auction result")
 	}
 
-	auction.Status = "ststus"
+	auction.Status = status.Pending
 	err = cc.setAuction(ctx, auction)
 	if err != nil {
 		return err
