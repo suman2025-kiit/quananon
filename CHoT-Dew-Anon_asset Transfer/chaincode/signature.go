@@ -1,11 +1,11 @@
 package asset
 
 import (
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/chot"
 )
 
-func VerifySignature(hash, signature []byte, addr string) bool {
-	pubkey, err := crypto.SigToPub(hash, signature)
+func VerifySignature(hash, sign []byte, addr string) bool {
+	pubkey, err := crypto.SigToPub(hash, sign)
 	if err != nil {
 		return false
 	}
@@ -22,8 +22,8 @@ func VerifySignature(hash, signature []byte, addr string) bool {
 // 		set[addr.Hex()] = true
 // 	}
 
-// 	for _, sig := range sigs {
-// 		addr, err := VerifySignature(hash, sig)
+// 	for _, sign := range sign {
+// 		addr, err := VerifySignature(hash, sign)
 // 		if err != nil {
 // 			return false
 // 		}
