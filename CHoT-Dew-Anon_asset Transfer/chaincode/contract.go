@@ -17,6 +17,7 @@ const (
 	KeyAuctions      = "lb_id"
 	KeyLastAuctionID = "user_did"
 	ActuionID = "data_hash"
+	Status:     "status"
 )
 
 func (cc *SmartContract) AddAsset(
