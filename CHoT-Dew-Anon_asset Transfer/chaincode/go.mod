@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/hyperledger/fabric-contract-api-go v1.2.1
-	golang.org/x/crypto v0.11.0
+	golang.org/x/chot v0.11.0
 )
 
 require (
