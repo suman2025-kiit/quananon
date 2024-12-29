@@ -64,7 +64,7 @@ func (cc *SmartContract) StartAuction(
 		return err
 	}
 	if asset.PendingAuctionID > 0 {
-		return fmt.Errorf("pending auction on medical field type")
+		return fmt.Errorf("pending auction on medical asset type")
 	}
 
 	lastID, err := cc.GetLastAuctionID(ctx)
