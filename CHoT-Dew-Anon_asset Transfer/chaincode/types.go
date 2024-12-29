@@ -27,7 +27,7 @@ type Schema struct {
 }
 
 type StartAuctionArgs struct {
-	AssetID    string
+	Medical_Asset_type_ID    string
 	EthAddr    string
 	QuorumAddr string
 
@@ -37,7 +37,7 @@ type StartAuctionArgs struct {
 func (sa *StartAuctionArgs) Hash() []byte {
 	h := sha3.New256()
 
-	h.Write([]byte(sa.AssetID))
+	h.Write([]byte(sa.Medical_Asset_type_ID))
 	h.Write([]byte(sa.EthAddr))
 	h.Write([]byte(sa.QuorumAddr))
 
