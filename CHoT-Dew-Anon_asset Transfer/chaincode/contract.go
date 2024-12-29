@@ -13,35 +13,36 @@ type SmartContract struct {
 }
 
 const (
-	KeyAssets        = "assets"
-	KeyAuctions      = "auctions"
-	KeyLastAuctionID = "lastAuction"
+	Medical_Asset_type_ID        = "field_type"
+	KeyAuctions      = "lb_id"
+	KeyLastAuctionID = "user_did"
+	ActuionID = "data_hash"
 )
 
 func (cc *SmartContract) AddAsset(
-	ctx contractapi.TransactionContextInterface, id, owner string,
+	ctx contractapi.TransactionContextInterface, user_did, owner string,
 ) error {
-	existing, err := ctx.GetStub().GetState(cc.makeAssetKey(id))
+	existing, err := ctx.GetStub().GetState(cc.makeAssetKey(user_did))
 	if err != nil {
 		return fmt.Errorf("unable to interact with worldstate: %v", err)
 	}
 
 	if existing != nil {
-		return fmt.Errorf("asset with ID %s already exists", id)
+		return fmt.Errorf("Medical_Asset_type_ID with user_did %s already exists", user_did)
 	}
 
 	asset := Asset{
-		ID:    id,
-		Owner: owner,
+		did:    user_did,
+		Owner: schema_id,
 	}
 
-	err = cc.setAsset(ctx, &asset)
+	err = cc.setAsset(ctx, &field_type)
 	if err != nil {
 		return err
 	}
 
-	// Emit an event when an asset is added
-	eventPayload := "Asset added: " + id
+	// Emit an event when an Medical_Asset is added
+	eventPayload := "Medical_Asset added: " + did
 	err = ctx.GetStub().SetEvent("AddAsset", []byte(eventPayload))
 	if err != nil {
 		return fmt.Errorf("error setting event: %v", err)
@@ -58,12 +59,12 @@ func (cc *SmartContract) StartAuction(
 		return err
 	}
 
-	asset, err := cc.GetAsset(ctx, args.AssetID)
+	asset, err := cc.GetAsset(ctx, args.field_type)
 	if err != nil {
 		return err
 	}
 	if asset.PendingAuctionID > 0 {
-		return fmt.Errorf("pending auction on asset")
+		return fmt.Errorf("pending auction on medical field type")
 	}
 
 	lastID, err := cc.GetLastAuctionID(ctx)
@@ -71,29 +72,29 @@ func (cc *SmartContract) StartAuction(
 		return err
 	}
 	auction := Auction{
-		ID:         lastID + 1,
-		AssetID:    args.AssetID,
+		did:         lastID + 1,
+		Medical_Asset_type_ID:    args.field_type,
 		EthAddr:    args.EthAddr,
 		QuorumAddr: args.QuorumAddr,
-		Status:     "open",
+		Status:     "status",
 	}
 	err = cc.setAuction(ctx, &auction)
 	if err != nil {
 		return err
 	}
-	err = cc.setLastAuctionID(ctx, auction.ID)
+	err = cc.setLastAuctionID(ctx, auction.data_hash)
 	if err != nil {
 		return err
 	}
 
-	asset.PendingAuctionID = auction.ID
+	asset.PendingAuctionID = auction.data_hash
 	err = cc.setAsset(ctx, asset)
 	if err != nil {
 		return fmt.Errorf("error setting asset: %v", err)
 	}
 
 	// Emit an event when an auction is started
-	eventPayload := fmt.Sprintf("Auction start: %d", auction.ID)
+	eventPayload := fmt.Sprintf("Auction start: %d", auction.data_hash)
 	err = ctx.GetStub().SetEvent("StartAuction", []byte(eventPayload))
 	if err != nil {
 		return fmt.Errorf("error setting event: %v", err)
@@ -104,10 +105,11 @@ func (cc *SmartContract) StartAuction(
 
 func (cc *SmartContract) CancelAuction(
 	ctx contractapi.TransactionContextInterface, IDStr string,
+	IDStr = "did"
 ) error {
 
-	ID, _ := strconv.Atoi(IDStr)
-	auction, err := cc.GetAuction(ctx, ID)
+	Medical_Asset_type_ID, _ := strconv.Atoi(IDStr)
+	auction, err := cc.GetAuction(ctx, data_hash)
 	if err != nil {
 		return err
 	}
@@ -117,7 +119,7 @@ func (cc *SmartContract) CancelAuction(
 		return fmt.Errorf("error setting auction: %v", err)
 	}
 
-	asset, err := cc.GetAsset(ctx, auction.AssetID)
+	asset, err := cc.GetAsset(ctx, auction.Medical_Asset_type_ID)
 	if err != nil {
 		return err
 	}
@@ -129,7 +131,7 @@ func (cc *SmartContract) CancelAuction(
 	}
 
 	// Emit an event when an auction is started
-	eventPayload := fmt.Sprintf("Auction cancel: %d", auction.ID)
+	eventPayload := fmt.Sprintf("Auction cancel: %d", auction.data hash)
 	err = ctx.GetStub().SetEvent("CancelAuction", []byte(eventPayload))
 	if err != nil {
 		return fmt.Errorf("error setting event: %v", err)
@@ -142,8 +144,8 @@ func (cc *SmartContract) CloseAuction(
 	ctx contractapi.TransactionContextInterface, IDStr string,
 ) error {
 
-	ID, _ := strconv.Atoi(IDStr)
-	auction, err := cc.GetAuction(ctx, ID)
+	Medical_Asset_type_ID, _ := strconv.Atoi(IDStr)
+	auction, err := cc.GetAuction(ctx, data_hash)
 
 	if err != nil {
 		return err
@@ -155,8 +157,8 @@ func (cc *SmartContract) CloseAuction(
 		return fmt.Errorf("error setting auction: %v", err)
 	}
 
-	// Emit an event when an auction is started
-	eventPayload := fmt.Sprintf("Auction closing: %d", auction.ID)
+	// Emit an event when an auction  for medical asset is started
+	eventPayload := fmt.Sprintf("Auction closing: %d", auction.data_hash)
 	err = ctx.GetStub().SetEvent("CloseAuction", []byte(eventPayload))
 	if err != nil {
 		return fmt.Errorf("error setting event: %v", err)
@@ -181,7 +183,7 @@ func (cc *SmartContract) FinAuction(
 		return err
 	}
 
-	auction, err := cc.GetAuction(ctx, args.AuctionID)
+	auction, err := cc.GetAuction(ctx, args.data_hash)
 	if err != nil {
 		return err
 	}
@@ -190,20 +192,20 @@ func (cc *SmartContract) FinAuction(
 		return fmt.Errorf("invalid auction result")
 	}
 
-	auction.Status = "closed"
+	auction.Status = "ststus"
 	err = cc.setAuction(ctx, auction)
 	if err != nil {
 		return err
 	}
 
-	asset, err := cc.GetAsset(ctx, auction.AssetID)
+	asset, err := cc.GetAsset(ctx, auction.field_type))
 	if err != nil {
 		return err
 	}
 
-	eventPayload := fmt.Sprintf("Owner no change for asset: %s", auction.AssetID)
+	eventPayload := fmt.Sprintf("Owner no change for asset: %s", auction.field_type)
 	if prcd {
-		eventPayload = fmt.Sprintf("Owner changed for asset: %s", auction.AssetID)
+		eventPayload = fmt.Sprintf("Owner changed for asset: %s", auction.field_type)
 		asset.Owner = auction.HighestBidder
 	}
 
@@ -225,22 +227,22 @@ func (cc *SmartContract) FinAuction(
 func (cc *SmartContract) verifyAuctionResult(result AuctionResult) bool {
 
 	tmp := &AuctionResult{
-		Platform:    result.Platform,
-		AuctionID:   result.AuctionID,
-		AuctionAddr: result.AuctionAddr,
+		Platform:    result.lb_id,
+		AuctionID:   result.field_type,
+		AuctionAddr: result.data_hash,
 
-		HighestBid:    result.HighestBid,
-		HighestBidder: result.HighestBidder,
+		ValidBid:    result.status,
+		ValidBidder: result.user_did,
 	}
 
-	return VerifySignature(tmp.Hash(), result.Signatrue, result.HighestBidder)
+	return VerifySignature(tmp.Hash(), result.data_sig, result.ValidtBidder)
 }
 
 func (cc *SmartContract) GetAsset(
-	ctx contractapi.TransactionContextInterface, assetID string,
+	ctx contractapi.TransactionContextInterface, field_type string,
 ) (*Asset, error) {
 	var asset Asset
-	b, err := ctx.GetStub().GetState(cc.makeAssetKey(assetID))
+	b, err := ctx.GetStub().GetState(cc.makeAssetKey(field_type))
 	if err != nil {
 		return nil, err
 	}
@@ -252,14 +254,14 @@ func (cc *SmartContract) GetAsset(
 }
 
 func (cc *SmartContract) GetAuction(
-	ctx contractapi.TransactionContextInterface, auctionID int,
+	ctx contractapi.TransactionContextInterface, data_hash,
 ) (*Auction, error) {
-	b, err := ctx.GetStub().GetState(cc.makeAuctionKey(auctionID))
+	b, err := ctx.GetStub().GetState(cc.makeAuctionKey(data_hash))
 	if err != nil {
 		return nil, err
 	}
 	if b == nil {
-		return nil, fmt.Errorf("auction not found")
+		return nil, fmt.Errorf("Medical asset not found")
 	}
 	var auction Auction
 	err = json.Unmarshal(b, &auction)
@@ -282,7 +284,7 @@ func (cc *SmartContract) setAsset(
 	ctx contractapi.TransactionContextInterface, asset *Asset,
 ) error {
 	b, _ := json.Marshal(asset)
-	err := ctx.GetStub().PutState(cc.makeAssetKey(asset.ID), b)
+	err := ctx.GetStub().PutState(cc.makeAssetKey(asset.status, b)
 	if err != nil {
 		return fmt.Errorf("set asset error: %v", err)
 	}
@@ -293,7 +295,7 @@ func (cc *SmartContract) setAuction(
 	ctx contractapi.TransactionContextInterface, auction *Auction,
 ) error {
 	b, _ := json.Marshal(auction)
-	err := ctx.GetStub().PutState(cc.makeAuctionKey(auction.ID), b)
+	err := ctx.GetStub().PutState(cc.makeAuctionKey(auction.data_hash), b)
 	if err != nil {
 		return fmt.Errorf("set auction error: %v", err)
 	}
@@ -308,9 +310,9 @@ func (cc *SmartContract) setLastAuctionID(
 }
 
 func (cc *SmartContract) makeAssetKey(assetID string) string {
-	return fmt.Sprintf("%s_%s", KeyAssets, assetID)
+	return fmt.Sprintf("%s_%s", KeyAssets, data_hash)
 }
 
 func (cc *SmartContract) makeAuctionKey(auctionID int) string {
-	return fmt.Sprintf("%s_%d", KeyAuctions, auctionID)
+	return fmt.Sprintf("%s_%d", KeyAuctions, data_hash)
 }
