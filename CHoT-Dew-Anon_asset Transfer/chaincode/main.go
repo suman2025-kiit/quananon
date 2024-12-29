@@ -11,10 +11,10 @@ import (
 func main() {
 	cc, err := contractapi.NewChaincode(&asset.SmartContract{})
 	if err != nil {
-		log.Panicf("Error creating chaincode: %v", err)
+		log.Panicf("Error creating CHoT medical data for quantum-blockchain chaincode: %v", err)
 	}
 
 	if err := cc.Start(); err != nil {
-		log.Panicf("Error starting chaincode: %v", err)
+		log.Panicf("Error starting CHoT medical data for quantum-blockchain chaincode: %v", err)
 	}
 }
