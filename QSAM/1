@@ -1,0 +1,120 @@
+import tensorcircuit as tc
+from tensorcircuit import shadows
+import numpy as np
+from functools import partial
+import jax
+import jax.numpy as jnp
+import equinox as eqx
+import optax
+from jaxtyping import Array
+
+K = tc.set_backend("jax")
+
+def zz_feature_map(circuit, data, wires):
+    """ZZ-Feature Map for encoding classical data into quantum states."""
+    for i, wire in enumerate(wires):
+        circuit.h(wire)
+        circuit.rz(wire, theta=data[i])
+        circuit.cx(wire, (wire + 1) % len(wires))
+    return circuit
+
+class EntanglementEntropy(eqx.Module):
+    weights: jax.Array
+    n_qubits: int
+
+    def __init__(self, n_qubits, key):
+        self.weights = jax.random.normal(key, ((n_qubits // 2),))
+        self.n_qubits = n_qubits
+
+    def feature_map(self, c, features, wires):
+        return zz_feature_map(c, features, wires)
+
+    def pqc_layer(self, c, weights, wires):
+        for i, wire in enumerate(wires):
+            c.rx(wire, theta=weights[i])
+        return c
+
+    @eqx.filter_jit
+    def entanglement_entropy(self, x):
+        c = tc.Circuit(self.n_qubits)
+        c = self.feature_map(c, x, range(self.n_qubits))
+        c = self.pqc_layer(c, self.weights, range(self.n_qubits // 2))
+        psi = c.state()
+        psi_red = tc.quantum.reduced_density_matrix(psi, cut=self.n_qubits // 2)
+        return jnp.real(-jnp.trace(psi_red * jnp.log(psi_red)))
+
+    def __call__(self, x):
+        return K.vmap(self.entanglement_entropy, vectorized_argnums=(0))(x)
+
+class QSAM(eqx.Module):
+    d_k: int
+    qs_layer: eqx.nn.Linear
+    ks_layer: eqx.nn.Linear
+    vs_layer: eqx.nn.Linear
+    ee_layer: EntanglementEntropy
+
+    def __init__(self, embed_dim, n_qubits, key):
+        key1, key2, key3, key4 = jax.random.split(key, 4)
+        self.d_k = embed_dim
+        self.qs_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key1)
+        self.ks_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key2)
+        self.vs_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key3)
+        self.ee_layer = EntanglementEntropy(n_qubits, key4)
+
+    def __call__(self, x):
+        q = jax.vmap(jax.vmap(self.qs_layer))(x)
+        k = jax.vmap(jax.vmap(self.ks_layer))(x)
+        v = jax.vmap(jax.vmap(self.vs_layer))(x)
+
+        qk_combined = jnp.concatenate((q, k), axis=-1)
+        qk_attention = self.ee_layer(qk_combined)
+
+        attention_scores = jax.nn.softmax(qk_attention / jnp.sqrt(self.d_k), axis=-1)
+        return jnp.matmul(attention_scores, v)
+
+class tQTKSAMClassifier(eqx.Module):
+    attention: QSAM
+    fc: eqx.nn.Linear
+    norm: eqx.nn.LayerNorm
+
+    def __init__(self, args):
+        key1, key2 = jax.random.split(args.key, 2)
+        self.attention = QSAM(args.embed_dim, args.n_qubits, key1)
+        self.fc = eqx.nn.Linear(args.embed_dim, args.n_classes, use_bias=False, key=key2)
+        self.norm = eqx.nn.LayerNorm((args.embed_dim,))
+
+    def __call__(self, x):
+        x = self.attention(x)
+        x = self.norm(x)
+        x = jax.vmap(self.fc)(x)
+        return x
+
+@eqx.filter_value_and_grad
+def compute_loss(model, images, labels):
+    logits = model(images)
+    loss = optax.softmax_cross_entropy_with_integer_labels(logits, labels)
+    return jnp.mean(loss)
+
+@eqx.filter_jit
+def train_step(model, optimizer, state, images, labels):
+    loss, grads = compute_loss(model, images, labels)
+    updates, state = optimizer.update(grads, state, model)
+    model = eqx.apply_updates(model, updates)
+    return model, state, loss
+
+class FraudDetectionSolver:
+    def __init__(self, args):
+        self.model = tQTKSAMClassifier(args)
+        self.optimizer = optax.adam(args.lr)
+        self.state = self.optimizer.init(self.model)
+        self.train_loader = args.train_loader
+        self.test_loader = args.test_loader
+
+    def run(self):
+        for epoch in range(args.epochs):
+            for images, labels in self.train_loader:
+                images, labels = jnp.array(images), jnp.array(labels)
+                self.model, self.state, loss = train_step(self.model, self.optimizer, self.state, images, labels)
+
+            if epoch % 10 == 0:
+                print(f"Epoch {epoch}: Loss {loss}")
