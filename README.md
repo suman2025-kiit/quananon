@@ -1,6 +1,6 @@
-# quananon
+# quananon_sam
 
-## Quantum_AnonCreds_Dew_Edge
+## Quantum_AnonCreds_Dew_Edge_Quantum_Self_Attention_Mechanism
 #### Initial setup for dynamic identity generation, 160-bit address generation , 4-Qubits GHZ Bell states generation via smart contract and chaincode validation 
 
 We utilized Ubuntu Bionic 18.04.4, Pandas, Python 3.6, Jupyter Notebook, and Hyperledger AnonCreds 1.0 to develop and validate Dynamic Identities (DID), 160-bit dynamic addresses, and Verifiable Credentials (VC) for participants in the Healthcare CHoT within a Quantum-Blockchain distributed network. AnonCreds 1.0, integrated with the Hyperledger Indy platform, facilitates the creation of an Indy System Pool. This setup assigns verifier roles such as Trust Anchor (role '101') and Trustee (role '0') using Nym Transactions in our 'DID_WalletAddress_Generator.py' script.
@@ -74,7 +74,15 @@ g. Now Import "Registrationcontract.sol" into the editor's folder containing 'Va
 
 All such coding related the aforesaid procedure is already mentioned in DID_WalletAddress_Generator.py file
 
-Installation of python 3.6, Jupiter Note book and Pandas for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore and trace the Frauds using our proposed Tiny Quantum Machine Learning Optimization Model - "tQTKSAM"  Model for the probability > 0.75 of state vectors for Frauds and consider such activities using the following steps.
+Now you have to consider for QSAM Model and for this model , we need to install pyqpanda==3.8.3.2 and pyvqnet==2.11.0. 
+
+a. We have to use the following code to install 'pyvqnet' platform:
+
+$ pip install pyvqnet --index-url https://pypi.originqc.com.cn
+
+b. During installing pyvqnet, pyqpanda will be installed automatically as a dependency.
+
+Installation of python 3.6, Jupiter Note book, Pandas, pyvqnet and pyvqnet for running the Quantum Machine Learning Algorithms using Qiskit Platforms, predict the valid quantum entangled states with Score Vectore, trace the Frauds using our proposed Tiny Quantum Machine Learning Optimization Model and successfully running the and working with the mechanism of Quantum Self Attantation Mechanism (QSAM), the combined and lightweight model - "tQMLTKSAM"  Model for the probability > 0.75 of state vectors for Frauds with high prediction capability. Such mechanisms are considered using the following steps.
 
 a.The relevant information is uploaded in separate CSV files, linked to dynamically generated DID and Wallet Addresses, 'varifiable,' from 'Schema'information to facilitate efficient data exchange and validation (sample.csv).
 
@@ -84,4 +92,6 @@ c. Afterwards, importing the file 'ghz_state_Fidelity_generation.py' Fidelity is
 
 d. Normalized and diagonally reduced the feature space with valid information using Quantum PCA (QPCA) as implementated in 'QPCA1.ipynb' file.
 
-e. Based on the valid 4-Qubit states for Fidelity(F)>=0.50, Feature related information is generated using ZZfeature Map for to generate Hilbert space for N-qubits of the valid GHZ states and encode the information
+e. Run the model QSAM using 'QSAM.ipynb' file.
+
+e. Based on the valid 4-Qubit states for Fidelity(F)>=0.50, Feature related information is generated using ZZfeature Map for to generate Hilbert space for N-qubits of the valid GHZ states and encode the information.
