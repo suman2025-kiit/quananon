@@ -88,7 +88,7 @@ a.The relevant information is uploaded in separate CSV files, linked to dynamica
 
 b. Initially, install Python 3.6, Jupyter Notebook, and Pandas to efficiently generate valid 4-qubit entangled GHZ states using 'GHZ_Theta-Copy.ipynb' file and θ-protocol based on Generated DID and dynamic 160-bit addresses.
 
-c. Afterwards, importing the file 'ghz_state_Fidelity_generation.py' Fidelity is generated for each 4-Qubit states from the .CSV files to check the Fidelity(F)>=0.50 or >= 50% and accondingly the valid 4-quibit engangled states are traced and fraud/invalid states are discarded.
+c. Afterwards, importing the file 'ghz_state_Fidelity_generation.py' Fidelity is generated for each 4-Qubit states from the .CSV files to check the Fidelity(F)>=0.50 or >= 50% and almost tends to 99% due to QSAM integration. Accondingly the valid 4-quibit engangled states are traced and fraud/invalid states are discarded.
 
 d. Normalized and diagonally reduced the feature space with valid information using Quantum PCA (QPCA) as implementated in 'QPCA1.ipynb' file.
 
