@@ -1,0 +1,46 @@
+import numpy as np
+import jax.numpy as jnp
+import optax
+import equinox as eqx
+from quantum.test import test_loop
+from quantum.utils import stats
+from quantum.dataset import build_dataset
+from quantum.embedding.onehot import embedding as onehot_embedding
+from quantum.embedding.tf import embedding as tf_embedding
+from quantum.model import tQTKSAMClassifier
+import pickle as pkl
+
+# Load the dataset
+test_path = './data/test.csv'
+model_path = './model/tQMLSAM_test.model'
+
+# Load vocab and idf
+with open(vocab_path, 'rb') as f:
+    vocab = pkl.load(f)
+with open(idf_path, 'rb') as f:
+    idf = pkl.load(f)
+
+# Load test data
+test_data = np.load(test_path, allow_pickle=True)
+x_test, y_test = np.asarray(test_data[0], dtype=int), np.asarray(test_data[1], dtype=int)
+
+# Apply embeddings
+x_test_we, x_test_se = onehot_embedding(x_test, len(vocab)), tf_embedding(x_test, len(vocab), idf)
+
+# Load trained model
+model = tQTKSAMClassifier(embed_dim=len(vocab), n_qubits=6, n_classes=2, key=eqx.random.PRNGKey(0))
+model_para = eqx.tree_deserialise_leaves(model_path, model)
+model = model.replace(**model_para)
+
+# Define test function
+def evaluate_model(model, x_test_we, x_test_se, y_test):
+    test_loss, test_acc = test_loop(
+        model,
+        optax.softmax_cross_entropy_with_integer_labels,
+        (x_test_we, x_test_se, y_test, 6),
+        metric_func=stats.accuracy
+    )
+    print(f'Test Accuracy: {test_acc:.4f}')
+
+# Run the evaluation
+evaluate_model(model, x_test_we, x_test_se, y_test)
