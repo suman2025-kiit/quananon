@@ -97,7 +97,7 @@ e. Run the model QSAM using 'QSAM.ipynb' file.
 e. Based on the valid 4-Qubit states for Fidelity(F)>=0.50, Feature related information is generated using ZZfeature Map for to generate Hilbert space for N-qubits of the valid GHZ states and encode the information.
 
 # Usage 
-Take the QSAM/ directory for accessing the respective quantum models .
+Take the QSAM/model/ directory for accessing the respective quantum models .
 
 #Use the following code for model testing:
 
@@ -107,4 +107,4 @@ $ python tQMLSAM_test.py model-name
 
 $ python tQMLSAM_train.py model-name
 
-The command-line argument model-name can be either tQMLSAM_test' or 'tQMLSAM_train'. The pre-trained models are located in the model/QSAM/ directory. 
+The command-line argument model-name can be either tQMLSAM_test' or 'tQMLSAM_train'. The pre-trained models are located in the QSAM/model/ directory. 
