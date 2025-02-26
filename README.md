@@ -111,3 +111,8 @@ $ python tQMLSAM_test.py model-name
 $ python tQMLSAM_train.py model-name
 
 The command-line argument model-name can be either tQMLSAM_test' or 'tQMLSAM_train'. The pre-trained models are located in the QSAM/model/ directory. 
+
+# The lightweight tQML model (tQMLTKSAM) is running using the following details :
+#Use the following code for model testing:
+$ python tQMLSAM_test.py model-name
+tQMLTKSAM Model
