@@ -114,5 +114,6 @@ The command-line argument model-name can be either tQMLSAM_test' or 'tQMLSAM_tra
 
 # The lightweight tQML model (tQMLTKSAM) is running using the following details :
 #Use the following code for model testing:
-$ python tQMLSAM_test.py model-name
-tQMLTKSAM Model
+$ python tQMLTKSAM_test.py model-name
+
+here model name will be 
