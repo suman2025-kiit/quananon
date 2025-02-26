@@ -123,4 +123,3 @@ here model name will be 'back_system_tQMTKLSAM_Model'
 $ python tQMLTKSAM_test.py model-name
 
 here model name will be 'tQMTKLSAM_Model'
-
