@@ -2,6 +2,7 @@
 
 ## Quantum_AnonCreds_Dew_Edge_Quantum_Self_Attention_Mechanism
 #### Initial setup for dynamic identity generation, 160-bit address generation , 4-Qubits GHZ Bell states generation via smart contract and chaincode validation 
+##*** All of this code and innovative work falls under the IPC Act (Copywright Act), so please refrain from copying it or using this concept anywork; you may review it solely for your understanding only***
 
 We utilized Ubuntu Bionic 18.04.4, Pandas, Python 3.6, Jupyter Notebook, and Hyperledger AnonCreds 1.0 to develop and validate Dynamic Identities (DID), 160-bit dynamic addresses, and Verifiable Credentials (VC) for participants in the Healthcare CHoT within a Quantum-Blockchain distributed network. AnonCreds 1.0, integrated with the Hyperledger Indy platform, facilitates the creation of an Indy System Pool. This setup assigns verifier roles such as Trust Anchor (role '101') and Trustee (role '0') using Nym Transactions in our 'DID_WalletAddress_Generator.py' script.
 
