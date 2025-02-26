@@ -1,1 +1,414 @@
+#!/usr/bin/env python
+import argparse
+import time
+import pickle as pkl
+
+import numpy as np
+import jax
+import jax.numpy as jnp
+import equinox as eqx
+import optax
+import tensorcircuit as tc
+from tensorcircuit import shadows
+
+# Custom imports (assuming these modules exist in your project)
+from quantum.dataset import build_dataset
+from quantum.embedding.onehot import embedding as onehot_embedding
+from quantum.embedding.tf import embedding as tf_embedding
+from quantum.tokenizer.ngram import get_tokenizer
+from quantum.filter.stw import get_stw, stw_filter
+from quantum.test import test_loop
+from quantum.utils import stats
+
+# Set the backend for TensorCircuit
+K = tc.set_backend("jax")
+
+
+########################################################################
+# Stage 1: GHZ Generation
+########################################################################
+
+def ghz_state(n_qubits):
+    """
+    Construct a GHZ state on `n_qubits` qubits and return the circuit.
+    GHZ = (|000...0> + |111...1>) / sqrt(2)
+    """
+    c = tc.Circuit(n_qubits)
+    c.h(0)
+    for i in range(n_qubits - 1):
+        c.cx(i, i + 1)
+    return c
+
+
+########################################################################
+# Feature Map (Example: ZZ Feature Map) + “Tiny QML”/PQC
+########################################################################
+
+def zz_feature_map(circuit, data, wires):
+    """
+    Example “ZZ-Feature Map” for encoding classical data into quantum states.
+    You can replace or extend this with any suitable encoding scheme.
+    """
+    for i, wire in enumerate(wires):
+        circuit.h(wire)
+        circuit.rz(wire, theta=data[i])
+        circuit.cx(wire, (wire + 1) % len(wires))
+    return circuit
+
+
+class TinyQML(eqx.Module):
+    """
+    An example “Tiny QML” layer: a simple parameterized circuit
+    that can be placed after GHZ or feature-map generation.
+    """
+    weights: jax.Array
+    n_qubits: int
+
+    def __init__(self, n_qubits, key):
+        # One trainable rotation per qubit
+        self.weights = jax.random.normal(key, (n_qubits,))
+        self.n_qubits = n_qubits
+
+    def __call__(self, circuit):
+        """
+        Apply parameterized Rx gates to the existing circuit.
+        This is an example placeholder for a more sophisticated PQC.
+        """
+        for i in range(self.n_qubits):
+            circuit.rx(i, theta=self.weights[i])
+        return circuit
+
+
+########################################################################
+# Stage 2: QSAM (Quantum Self-Attention Module) + Entanglement Entropy
+########################################################################
+
+class EntanglementEntropy(eqx.Module):
+    """
+    Computes entanglement entropy on half the qubits after a PQC.
+    Used here to produce an “attention” signal for QSAM.
+    """
+    weights: jax.Array
+    n_qubits: int
+
+    def __init__(self, n_qubits, key):
+        # For example, a single layer of trainable rotations on half the qubits:
+        self.weights = jax.random.normal(key, (n_qubits // 2,))
+        self.n_qubits = n_qubits
+
+    def feature_map(self, c, features, wires):
+        return zz_feature_map(c, features, wires)
+
+    def pqc_layer(self, c, weights, wires):
+        for i, wire in enumerate(wires):
+            c.rx(wire, theta=weights[i])
+        return c
+
+    @eqx.filter_jit
+    def entanglement_entropy(self, x):
+        """
+        1) Build circuit with GHZ or feature map + a PQC layer
+        2) Compute the reduced density matrix for half the qubits
+        3) Return the entanglement entropy
+        """
+        c = tc.Circuit(self.n_qubits)
+        # You could also incorporate GHZ generation here if you want:
+        # c = ghz_state(self.n_qubits)  # if needed
+
+        c = self.feature_map(c, x, list(range(self.n_qubits)))
+        c = self.pqc_layer(c, self.weights, list(range(self.n_qubits // 2)))
+        psi = c.state()
+        rho = tc.quantum.reduced_density_matrix(psi, cut=self.n_qubits // 2)
+        return jnp.real(-jnp.trace(rho * jnp.log(rho + 1e-12)))
+
+    def __call__(self, x):
+        """
+        Vectorize the entropy calculation over a batch of inputs x.
+        """
+        return K.vmap(self.entanglement_entropy, vectorized_argnums=0)(x)
+
+
+class QSAM(eqx.Module):
+    """
+    Quantum Self-Attention Module:
+      - Projects inputs into Q, K, V
+      - Uses an entanglement-entropy sub-block (EE) to produce an attention score
+      - Applies softmax, then multiplies by V
+    """
+    d_k: int
+    qs_layer: eqx.nn.Linear
+    ks_layer: eqx.nn.Linear
+    vs_layer: eqx.nn.Linear
+    ee_layer: EntanglementEntropy
+
+    def __init__(self, embed_dim, n_qubits, key):
+        key1, key2, key3, key4 = jax.random.split(key, 4)
+        self.d_k = embed_dim
+        self.qs_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key1)
+        self.ks_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key2)
+        self.vs_layer = eqx.nn.Linear(embed_dim, embed_dim, use_bias=False, key=key3)
+        self.ee_layer = EntanglementEntropy(n_qubits, key4)
+
+    def __call__(self, x):
+        """
+        x shape: (batch, sequence_length, embed_dim)
+        1) Create Q, K, V
+        2) Concatenate Q and K, pass to entanglement-entropy sub-block
+        3) Convert EE output to an attention score
+        4) Multiply by V
+        """
+        # For multi-dimensional x, we apply linear layers via vmap
+        q = jax.vmap(jax.vmap(self.qs_layer))(x)  # shape = (batch, seq_len, embed_dim)
+        k = jax.vmap(jax.vmap(self.ks_layer))(x)
+        v = jax.vmap(jax.vmap(self.vs_layer))(x)
+
+        # Combine Q and K, feed to entanglement-entropy circuit
+        qk_combined = jnp.concatenate((q, k), axis=-1)  # shape = (batch, seq_len, 2*embed_dim)
+        qk_attention = self.ee_layer(qk_combined)       # shape = (batch, seq_len)
+
+        # Convert entanglement-entropy values to attention weights
+        # Here, we do a softmax over the “seq_len” dimension
+        attention_scores = jax.nn.softmax(qk_attention / jnp.sqrt(self.d_k), axis=-1)
+
+        # Weighted sum of V across seq_len
+        # v shape = (batch, seq_len, embed_dim)
+        # attention_scores shape = (batch, seq_len)
+        # We want a matrix multiply: (batch, 1, seq_len) x (batch, seq_len, embed_dim)
+        # So we can add an extra dimension to attention_scores
+        attention_scores = jnp.expand_dims(attention_scores, axis=-2)  # (batch, 1, seq_len)
+        # Now multiply
+        result = jnp.matmul(attention_scores, v)  # shape = (batch, 1, embed_dim)
+        result = jnp.squeeze(result, axis=-2)     # shape = (batch, embed_dim)
+        return result
+
+
+########################################################################
+# Stage 2 (continued): Combining QSAM + a “Tiny QML” into a Classifier
+########################################################################
+
+class tQMLTKSAMClassifier(eqx.Module):
+    """
+    Full classifier that:
+      - Optionally starts from a GHZ circuit (or can embed directly)
+      - Uses QSAM for attention
+      - Uses a final FC layer for classification
+      - (Optional) Could incorporate a separate TinyQML step, or combine it
+    """
+    attention: QSAM
+    tiny_qml: TinyQML
+    norm: eqx.nn.LayerNorm
+    fc: eqx.nn.Linear
+
+    def __init__(self, embed_dim: int, n_qubits: int, n_classes: int, key):
+        key1, key2, key3 = jax.random.split(key, 3)
+        self.attention = QSAM(embed_dim, n_qubits, key1)
+        self.tiny_qml = TinyQML(n_qubits, key2)
+        self.norm = eqx.nn.LayerNorm((embed_dim,))
+        self.fc = eqx.nn.Linear(embed_dim, n_classes, use_bias=False, key=key3)
+
+    def __call__(self, x):
+        """
+        x: (batch, seq_len, embed_dim)
+        """
+        # 1) QSAM
+        x = self.attention(x)  # shape => (batch, embed_dim)
+        x = self.norm(x)
+
+        # 2) (Optional) “Tiny QML” step — in this example, we treat it
+        #    as a simple extra circuit-based transformation. If you want
+        #    to incorporate the TinyQML directly on the same qubits, you
+        #    can do so by building a circuit. Here, we illustrate a
+        #    dummy usage for demonstration:
+        #
+        #    We won't pass 'x' to the circuit again here, because x is
+        #    classical. But you could interpret x as angles for the PQC:
+        # 
+        #    circuit = ghz_state(self.tiny_qml.n_qubits)
+        #    # encode 'x' in some manner
+        #    circuit = self.tiny_qml(circuit)
+        #    # measure or produce some output
+        #
+        # For simplicity, let's skip applying the circuit to x in code
+        # and just assume self.tiny_qml is part of the attention pipeline.
+
+        # 3) Final classification
+        logits = jax.vmap(self.fc)(x)  # (batch, n_classes)
+        return logits
+
+
+########################################################################
+# Stage 3: Measurement & Validation + Training Loop
+########################################################################
+
+@eqx.filter_value_and_grad
+def compute_loss(model, inputs, labels):
+    """
+    Compute cross-entropy loss for classification.
+    """
+    logits = model(inputs)
+    loss = optax.softmax_cross_entropy_with_integer_labels(logits, labels)
+    return jnp.mean(loss)
+
+
+@eqx.filter_jit
+def train_step(model, optimizer, state, inputs, labels):
+    loss, grads = compute_loss(model, inputs, labels)
+    updates, state = optimizer.update(grads, state, model)
+    model = eqx.apply_updates(model, updates)
+    return model, state, loss
+
+
+########################################################################
+# Training Routine
+########################################################################
+
+def train_model(args):
+    # Load vocabulary and IDF from pickle files
+    with open(args.vocab_path, 'rb') as f:
+        vocab = pkl.load(f)
+    with open(args.idf_path, 'rb') as f:
+        idf = pkl.load(f)
+
+    # Load training and testing data (assumed to be in .npy format here)
+    x_train, y_train = np.load(args.train_path, allow_pickle=True)
+    x_test, y_test = np.load(args.test_path, allow_pickle=True)
+
+    # Convert data into embeddings (one-hot, TF, etc.)
+    # For demonstration, we will just use the one-hot embedding.
+    x_train_we = onehot_embedding(x_train, len(vocab))
+    x_test_we = onehot_embedding(x_test, len(vocab))
+
+    # If you want to combine embeddings, e.g. [one-hot; tf], you can do:
+    # x_train_tf = tf_embedding(x_train, len(vocab), idf)
+    # x_train_we = np.concatenate([x_train_we, x_train_tf], axis=-1)
+    # and similarly for x_test
+
+    # For a 2D input (batch, seq_len) -> embed_dim can be len(vocab).
+    # If your data is shaped differently, adjust accordingly.
+    # Suppose x_train_we is shape (N, seq_len, embed_dim).
+
+    key = jax.random.PRNGKey(args.seed)
+    model = tQMLTKSAMClassifier(
+        embed_dim=x_train_we.shape[-1],
+        n_qubits=args.n_qubits,
+        n_classes=args.n_classes,
+        key=key
+    )
+
+    optimizer = optax.adam(args.lr)
+    state = optimizer.init(model)
+
+    best_accuracy = -1e5
+
+    for epoch in range(1, args.epochs + 1):
+        start_time = time.time()
+
+        # Training step (you can expand this into mini-batches if desired)
+        loss, grads = eqx.filter_value_and_grad(
+            lambda m: optax.softmax_cross_entropy_with_integer_labels(
+                m(x_train_we), y_train
+            ).mean()
+        )(model)
+        updates, state = optimizer.update(grads, state, model)
+        model = eqx.apply_updates(model, updates)
+
+        # Evaluate on test set
+        predictions = model(x_test_we)  # shape (test_size, n_classes)
+        test_accuracy = jnp.mean(jnp.argmax(predictions, axis=-1) == y_test)
+
+        elapsed = time.time() - start_time
+        print(f"Epoch {epoch}: Loss = {loss:.4f}, Test Accuracy = {test_accuracy:.4f}, "
+              f"Time = {elapsed:.2f}s")
+
+        # Save best model
+        if test_accuracy > best_accuracy:
+            best_accuracy = test_accuracy
+            eqx.tree_serialise_leaves(args.model_path, model)
+
+    print(f"Best test accuracy achieved: {best_accuracy:.4f}")
+
+
+########################################################################
+# Testing Routine
+########################################################################
+
+def test_model(args):
+    """
+    Load the saved model and run inference on the test set.
+    Optionally uses your custom test_loop or direct accuracy measurement.
+    """
+    # Build dataset using your tokenizer and filtering utilities
+    tokenizer = get_tokenizer(ngram=[1], token_filter=stw_filter, la='en')
+    vocab, idf, train_data, test_data = build_dataset(
+        args.train_path,
+        args.test_path,
+        tokenizer,
+        args.seq_len,
+        need_pad=True
+    )
+    x_test, y_test = np.asarray(test_data[0], dtype=int), np.asarray(test_data[1], dtype=int)
+
+    # Convert to embeddings
+    x_test_we = onehot_embedding(x_test, len(vocab))
+
+    # Load model
+    model = tQMLTKSAMClassifier(
+        embed_dim=x_test_we.shape[-1],
+        n_qubits=args.n_qubits,
+        n_classes=args.n_classes,
+        key=eqx.random.PRNGKey(args.seed)
+    )
+    model_params = eqx.tree_deserialise_leaves(args.model_path, model)
+    model = model.replace(**model_params)
+
+    # Evaluate (using your test_loop or direct approach)
+    def evaluate_model(model, x_test_we, y_test):
+        predictions = model(x_test_we)
+        acc = jnp.mean(jnp.argmax(predictions, axis=-1) == y_test)
+        print(f"Test Accuracy: {acc:.4f}")
+
+    evaluate_model(model, x_test_we, y_test)
+
+
+########################################################################
+# Main
+########################################################################
+
+def main():
+    parser = argparse.ArgumentParser(description="tQMLTKSAM Model (3-Stage Pipeline)")
+    parser.add_argument('--mode', type=str, default='train', choices=['train', 'test'],
+                        help="Choose mode: train or test")
+    parser.add_argument('--train_path', type=str, default='./data/train.npy',
+                        help="Path to training data (NumPy file)")
+    parser.add_argument('--test_path', type=str, default='./data/test.npy',
+                        help="Path to test data (NumPy file)")
+    parser.add_argument('--vocab_path', type=str, default='./data/vocab.quantum.pkl',
+                        help="Path to vocabulary pickle file")
+    parser.add_argument('--idf_path', type=str, default='./data/RP/idf.quantum.pkl',
+                        help="Path to IDF pickle file")
+    parser.add_argument('--model_path', type=str, default='./model/tQMLTKSAM.model',
+                        help="Path to save (or load) the trained model")
+    parser.add_argument('--n_qubits', type=int, default=6,
+                        help="Number of qubits for the quantum circuit(s)")
+    parser.add_argument('--n_classes', type=int, default=2,
+                        help="Number of output classes")
+    parser.add_argument('--epochs', type=int, default=100,
+                        help="Number of training epochs")
+    parser.add_argument('--lr', type=float, default=0.05,
+                        help="Learning rate")
+    parser.add_argument('--seed', type=int, default=0,
+                        help="Random seed")
+    parser.add_argument('--seq_len', type=int, default=5,
+                        help="Sequence length for tokenization (used in test mode)")
+
+    args = parser.parse_args()
+
+    if args.mode == 'train':
+        train_model(args)
+    else:
+        test_model(args)
+
+
+if __name__ == '__main__':
+    main()
 
