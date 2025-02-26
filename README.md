@@ -116,4 +116,11 @@ The command-line argument model-name can be either tQMLSAM_test' or 'tQMLSAM_tra
 #Use the following code for model testing:
 $ python tQMLTKSAM_test.py model-name
 
-here model name will be 
+here model name will be 'back_system_tQMTKLSAM_Model'
+
+#For running the overall functionality as shown in Figure 5 and Figure 6, of our manuscript, you have to run 
+
+$ python tQMLTKSAM_test.py model-name
+
+here model name will be 'tQMTKLSAM_Model'
+
