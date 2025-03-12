@@ -1,0 +1,7 @@
+1 skillful_ADJ quantum_N model_N predicts_TV anomalies_N
+1 secure_ADJ blockchain_N manages_TV transactions_N
+1 efficient_ADJ tinyQML_N detects_TV fraud_N
+1 quantum_ADJ model_N ensures_TV privacy_N
+0 insecure_ADJ blockchain_N leaks_TV identity_N
+0 weak_ADJ model_N misses_TV anomaly_N
+0 compromised_ADJ blockchain_N exposes_TV data_N

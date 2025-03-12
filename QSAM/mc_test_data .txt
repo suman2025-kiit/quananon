@@ -1,0 +1,6 @@
+1 quantum_ADJ model_N identifies_TV fraud_N
+1 robust_ADJ blockchain_N secures_TV transactions_N
+1 effective_ADJ anoncreds_N anonymizes_TV identities_N
+0 insecure_ADJ blockchain_N reveals_TV sensitive_ADJ data_N
+0 weak_ADJ model_N fails_TV detection_N
+0 compromised_ADJ blockchain_N leaks_TV credentials_N

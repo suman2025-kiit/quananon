@@ -1,0 +1,7 @@
+1 organization_N that_RPRON blockchain_N secure_V
+1 user_N that_RPRON data_N anonymize_V
+1 quantum_N that_RPRON anomaly_N detect_V
+1 blockchain_N that_RPRON transaction_N validate_V
+0 blockchain_N that_RPRON hacker_N access_V
+0 user_N that_RPRON blockchain_N compromise_V
+0 quantum_N that_RPRON anomaly_N ignore_V

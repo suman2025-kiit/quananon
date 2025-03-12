@@ -1,0 +1,6 @@
+1 blockchain_N that_RPRON data_N secure_V
+1 quantum_model_N that_RPRON fraud_N detect_V
+1 anoncreds_N that_RPRON identity_N anonymize_V
+0 blockchain_N that_RPRON data_N leak_V
+0 quantum_service_N that_RPRON fraud_N miss_V
+0 anoncreds_N that_RPRON identity_N expose_V
