@@ -133,3 +133,10 @@ pip install -e .
 
 ## or update in already installed 
 pip install pennylane --upgrade
+
+## To generate the simulation outputs as shown in the manuscript for Figure 9 and Figure 10, 
+PLease run the two files - under the path - quananon/PennyLane comparission/
+
+PennyLane comparission/anon_tqmlsam_comparison_simulation.py
+ and 
+PennyLane comparission/anon_tqmlsam_dew_simulation.py
