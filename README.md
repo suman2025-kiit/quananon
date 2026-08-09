@@ -97,7 +97,7 @@ e. Run the basic QSAM model using 'QSAM.ipynb' file. (If you want to explore the
 
 f. Based on the valid 4-Qubit states for Fidelity(F)>=0.50, Feature related information is generated using ZZfeature Map for to generate Hilbert space for N-qubits of the valid GHZ states and encode the information with >= 50% accuracy.
 
-g. Based on the Fidelity score, we can optimize the prediction mechanism for our proposed novel and lightweight model (tQMLTKSAM) using following two different models used for the tranning (tQMLSAM_train) and testing(tQMLSAM_test) purposes respectively. Additionally, we optimized using the tQMLSAM_test for the prediction mechanism from >=50% to >= 99% and with complexities -<img width="308" height="100" alt="image" src="https://github.com/user-attachments/assets/79e1fbdf-fe77-4f8c-b116-e1593342a1be" />
+g. Based on the Fidelity score, we can optimize the prediction mechanism for our proposed novel and lightweight model (tQMLTKSAM) using following two different models used for the tranning (tQMLSAM_train) and testing(tQMLSAM_test) purposes respectively. Additionally, we optimized using the tQMLSAM_test for the prediction mechanism from >=50% to >= 99% and with complexities for both Time and Space Complexities respectively-<img width="308" height="100" alt="image" src="https://github.com/user-attachments/assets/79e1fbdf-fe77-4f8c-b116-e1593342a1be" />
 
 
 
